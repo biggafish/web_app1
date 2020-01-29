@@ -1,4 +1,4 @@
-from starlette.applications import Starlette
+from Starlette.applications import Starlette
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
@@ -8,9 +8,9 @@ from io import BytesIO
 from fastai import *
 from fastai.vision import *
 
-model_file_url = 'https://www.dropbox.com/s/y4kl2gv1akv7y4i/stage-2.pth?raw=1'
+model_file_url = 'https://drive.google.com/uc?export=download&confirm=aMvU&id=1TWEl8NRtbKH4-t7S2vBcP6R5gw0gzH7D'
 model_file_name = 'model'
-classes = ['black', 'grizzly', 'teddys']
+classes = ['rowing_eight','sculling_double', 'sculling_quad','sculling_single']
 path = Path(__file__).parent
 
 app = Starlette()
@@ -18,17 +18,17 @@ app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['X-Reques
 app.mount('/static', StaticFiles(directory='app/static'))
 
 async def download_file(url, dest):
-    if dest.exists(): return
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            data = await response.read()
-            with open(dest, 'wb') as f: f.write(data)
+     if dest.exists(): return
+     async with aiohttp.ClientSession() as session:
+         async with session.get(url) as response:
+             data = await response.read()
+             with open(dest, 'wb') as f: f.write(data)
 
 async def setup_learner():
-    await download_file(model_file_url, path/'models'/f'{model_file_name}.pth')
+    await download_file(model_file_url, path/'models'/f'{model_file_name}.pth')       
     data_bunch = ImageDataBunch.single_from_classes(path, classes,
-        ds_tfms=get_transforms(), size=224).normalize(imagenet_stats)
-    learn = cnn_learner(data_bunch, models.resnet34, pretrained=False)
+        ds_tfms=get_transforms(), size=299).normalize(imagenet_stats)
+    learn = cnn_learner(data_bunch, models.resnet50, pretrained=False)
     learn.load(model_file_name)
     return learn
 
@@ -49,6 +49,4 @@ async def analyze(request):
     img = open_image(BytesIO(img_bytes))
     return JSONResponse({'result': str(learn.predict(img)[0])})
 
-if __name__ == '__main__':
-    if 'serve' in sys.argv: uvicorn.run(app, host='0.0.0.0', port=8080)
-
+if __name__ == '__main__':                                                                                                  if 'serve' in sys.argv: uvicorn.run(app, host='0.0.0.0', port=8080)
